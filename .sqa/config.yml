@@ -6,12 +6,11 @@ config:
       repo: https://github.com/EOSC-synergy/sqaaas-tooling
 environment:
   JPL_DOCKERFORCEBUILD: enabled
-  JPL_KEEPGOING: enabled
 sqa_criteria:
   QC.Sty:
     repos:
       this_repo:
         commands:
-        - flake8 Folder_Python
-        container: qc.sty_messy-peach-loon
+        - flake8 .
+        container: qc.sty_nerdy-harlequin-cheetah
 timeout: 5400
