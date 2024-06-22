@@ -1,0 +1,24 @@
+config:
+  credentials: []
+  project_repos:
+    github.com/EOSC-synergy/sqaaas-tooling:
+      branch: release/2.0.1
+      repo: https://github.com/EOSC-synergy/sqaaas-tooling
+environment:
+  JPL_DOCKERFORCEBUILD: enabled
+sqa_criteria:
+  QC.Uni:
+    repos:
+      this_repo:
+        commands:
+        - tox -c tox.ini -e .
+        container: qc.uni_pretty-aqua-crane
+      this_repo__2:
+        commands:
+        - flake8 .
+        container: qc.uni_lousy-viridian-butterfly
+      this_repo__3:
+        commands:
+        - pytest . --json-report  --json-report-indent 4
+        container: qc.uni_skimpy-wisteria-tortoise
+timeout: 5400
