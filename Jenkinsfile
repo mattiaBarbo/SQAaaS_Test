@@ -35,5 +35,11 @@ pipeline {
                 }
             }
         }
+        stage('Unit Tests') {
+            steps {
+                // Esegui i test unitari con pytest
+                sh 'python3 -m pytest -v'
+            }
+        }
     }
 }
