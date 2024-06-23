@@ -6,20 +6,21 @@ config:
       repo: https://github.com/EOSC-synergy/sqaaas-tooling
 environment:
   JPL_DOCKERFORCEBUILD: enabled
-sqa_criteria:
-  QC.Doc:
+QC.Doc:
     repos:
       this_repo:
         commands:
         - tox -c tox.ini -e .
         container: qc.doc_dorky-smalt-iguana
-  QC.Sty:
+timeout: 5400        
+QC.Sty:
     repos:
       this_repo:
         commands:
         - flake8 .
         container: qc.sty_droopy-coral-swan
-  QC.Uni:
+timeout: 5400
+QC.Uni:
     repos:
       this_repo:
         commands:
