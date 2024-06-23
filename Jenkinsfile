@@ -23,13 +23,6 @@ pipeline {
             }
         }
         stage('SQA baseline criterion: QC.Doc & QC.Sty') {
-            when {
-                anyOf {
-                    expression { currentBuild.previousCompletedBuild == null }
-                    changeset ".sqa/*"
-                    changeset "Jenkinsfile"
-                }
-            }
             steps {
                 script {
                     projectConfig = pipelineConfig(
