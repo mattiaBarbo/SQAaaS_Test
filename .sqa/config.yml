@@ -1,0 +1,22 @@
+config:
+  credentials: []
+  project_repos:
+    github.com/EOSC-synergy/sqaaas-tooling:
+      branch: release/2.0.1
+      repo: https://github.com/EOSC-synergy/sqaaas-tooling
+environment:
+  JPL_DOCKERFORCEBUILD: enabled
+sqa_criteria:
+  QC.Doc:
+    repos:
+      this_repo:
+        commands:
+        - tox -c tox.ini -e .
+        container: qc.doc_woolly-ruby-pig
+  QC.Uni:
+    repos:
+      this_repo:
+        commands:
+        - python3 -m pytest -v
+        container: qc.uni_crappy-taupe-slug
+timeout: 5400
