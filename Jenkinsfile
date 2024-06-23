@@ -11,6 +11,12 @@ pipeline {
     agent any
 
     stages {
+        stage('Unit Tests') {
+            steps {
+                // Esegui i test unitari con pytest
+                sh 'python3 -m pytest -v'
+            }
+        }
         stage('SQA baseline criterion: QC.Doc & QC.Uni') {
             when {
                 anyOf {
@@ -33,12 +39,6 @@ pipeline {
                 cleanup {
                     cleanWs()
                 }
-            }
-        }
-        stage('Unit Tests') {
-            steps {
-                // Esegui i test unitari con pytest
-                sh 'python3 -m pytest -v'
             }
         }
     }
