@@ -42,6 +42,9 @@ jobs:
           id: ngrok
           run: echo "::set-output name=url::$(./ngrok http -log=stdout 3000 | grep "https://" | awk -F" " '{print $8}')"
 
+        - name: Install pytest
+          run: python3 -m pip install pytest
+          
         - name: Run tests
           env:
             API_URL: ${{ steps.ngrok.outputs.url }}  # Passa l'URL pubblico di ngrok come variabile d'ambiente
