@@ -7,6 +7,12 @@ on:
 jobs:
   build: 
     runs-on: ubuntu-latest
+
+    services:
+      docker:
+        image: docker:stable-dind
+        options: --privileged  # Abilita privilegi Docker-in-Docker (DinD)
+        
     name: Quality Assessment & Awarding
     steps:
         - name: Checkout repository
@@ -15,32 +21,35 @@ jobs:
             submodules: true          
             fetch-depth: 0    
 
+        - name: Build Docker images
+          run: docker-compose build
+
+        - name: Start Docker containers
+          run: docker-compose up -d
+
+        - name: Wait for containers to start
+          run: sleep 30  # Attendi il tempo necessario per il caricamento dei container (regola generale, può variare)
+
         #- name: Quality Tests
           #uses: eosc-synergy/sqaaas-assessment-action@v2
           #with:
             #repo: 'https://github.com/HPCI-Lab/yProv.git'
             #branch: 'main'
 
-        - name: Install pytest
-          run: python3 -m pip install pytest
-
-        - name: Install ngrok
-          run: curl -fsSL -o ngrok.zip https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-amd64.zip
-               unzip ngrok.zip
-               chmod +x ngrok
-
-        - name: Avvia ngrok per esporre localhost:3000
-          run: ./ngrok http 3000
-
-        - name: Ngrok public URL
-          run: sleep 10
-               NGROK_URL=$(curl -s http://localhost:4040/api/tunnels | jq -r '.tunnels[0].public_url')
-
+        
         - name: UniTests
-          run: python3 -m pytest --base-url="${{ steps.ngrok.outputs.ngrok_url }}/api/v0/auth" -v
+          run: python3 -m pytest -v
+          env: 
+            PYTEST_PORT: 3000
+
+        - name: Stop Docker containers
+          run: docker-compose down
+
+        
                
-        - name: Print out payload
-          run: cat workflow_validation_step.json
+       
+
+
 
 
 
