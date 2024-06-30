@@ -10,4 +10,4 @@ jobs:
       
 
       - name: Verifica connessione ping
-        run: ping -c 5 google.com
+        run: ping -c 5 bing.com
