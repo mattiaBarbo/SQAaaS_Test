@@ -22,10 +22,10 @@ jobs:
             fetch-depth: 0    
 
         - name: Start Docker container web
-          run: docker run -d -p 3000:3000 web
+          run: docker run -d -p 3000:3000 hpci/yprov:latest
 
         - name: Start Docker container db
-          run: docker run -d -p 7474:7474 db
+          run: docker run -d -p 7474:7474 neo4j:enterprise
 
         - name: Wait for API to start
           run: sleep 10s  # Attendi che il container si avvii completamente
