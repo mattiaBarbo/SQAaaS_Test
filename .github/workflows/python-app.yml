@@ -1,33 +1,53 @@
-# SPDX-FileCopyrightText: Copyright contributors to the Software Quality Assurance as a Service (SQAaaS) project.
-#
-# SPDX-License-Identifier: GPL-3.0-only
----
-name: SQAaaS
+name: Software Quality Assurance as a Service
 
 on:
   push:
     branches: [main]
-  # pull_request:
-  #   branches: [main, dev]
 
 jobs:
-  sqaaas_job:
+  build: 
     runs-on: ubuntu-latest
-    name: Job that triggers SQAaaS platform
+    name: Quality Assessment & Awarding
     steps:
-      - name: Step definition for validating the workflow
-        uses: eosc-synergy/sqaaas-step-action@v1
-        with:
-          name: workflow_validation_step
-          tool: commands
-          commands: |
-            make torch-env-cpu
-            make tensorflow-env-cpu
-            .venv-pytorch/bin/pytest -v ./tests/ -m "not slurm and not memory_heavy"
-          container: eoscsynergy/sqaaas-micromamba:1.5.3-1
-      - name: Print out payload
-        run: cat workflow_validation_step.json
-      - name: SQAaaS assessment with unit testing (QC.Uni) step
-        uses: eosc-synergy/sqaaas-assessment-action@v2
-        with:
-          qc_uni_steps: workflow_validation_step
+        - name: Checkout repository
+          uses: actions/checkout@v2
+          with:
+            submodules: true          
+            fetch-depth: 0    
+
+        #- name: Quality Tests
+          #uses: eosc-synergy/sqaaas-assessment-action@v2
+          #with:
+            #repo: 'https://github.com/HPCI-Lab/yProv.git'
+            #branch: 'main'
+
+        - name: Install pytest
+          run: python3 -m pip install pytest
+
+        - name: Install ngrok
+          run: curl -fsSL -o ngrok.zip https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-amd64.zip
+               unzip ngrok.zip
+               chmod +x ngrok
+
+        - name: Avvia ngrok per esporre localhost:3000
+          run: ./ngrok http 3000
+
+        - name: Ngrok public URL
+          run: sleep 10
+               NGROK_URL=$(curl -s http://localhost:4040/api/tunnels | jq -r '.tunnels[0].public_url')
+
+        - name: UniTests
+          run: python3 -m pytest --base-url="${{ steps.ngrok.outputs.ngrok_url }}/api/v0/auth" -v
+               
+        - name: Print out payload
+          run: cat workflow_validation_step.json
+
+
+
+         
+
+     
+        
+        
+  
+  
