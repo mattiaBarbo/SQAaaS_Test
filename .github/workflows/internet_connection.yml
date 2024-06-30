@@ -1,0 +1,19 @@
+name: Verifica Connessione di Rete
+
+on: [push, pull_request]
+
+jobs:
+  check_network:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Verifica connettività HTTP
+        run: |
+          if ! curl -fsSL https://example.com/test.txt -o /dev/null; then
+            echo "Errore: Impossibile scaricare il file di test."
+            exit 1
+          fi
+          echo "Connessione HTTP verificata con successo."
+
+      - name: Verifica connessione ping
+        run: ping -c 5 google.com
