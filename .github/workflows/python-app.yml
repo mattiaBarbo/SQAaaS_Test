@@ -5,89 +5,79 @@ on:
     branches: [main]
 
 jobs:
-  build: 
+  build:
     runs-on: ubuntu-latest
 
     services:
       docker:
         image: docker:stable-dind
-        options: --privileged  # Abilita privilegi Docker-in-Docker (DinD)
-    
-    name: python app
+        options: --privileged  # Enable Docker-in-Docker (DinD) privileges
+
+    name: Quality Assessment & Awarding
     steps:
-        - name: Checkout repository
-          uses: actions/checkout@v2
-          with:
-            submodules: true          
-            fetch-depth: 0    
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+          fetch-depth: 0
 
-        - name: Start Docker container web
-          run: docker run -d -p 3000:3000 hpci/yprov:latest
+      - name: Start Docker container web
+        run: docker run -d -p 3000:3000 hpci/yprov:latest
 
-        - name: Start Docker container db
-          run: docker run -d -p 7474:7474 neo4j:enterprise
+      - name: Start Docker container db
+        run: docker run -d -p 7474:7474 neo4j:enterprise
 
-        - name: Wait for API to start
-          run: sleep 10s  # Attendi che il container si avvii completamente
+      - name: Wait for API to start
+        run: sleep 10s  # Wait for the container to fully start
 
-        - name: Install ngrok
-          run: |
-            wget https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-amd64.zip
-            unzip ngrok-stable-linux-amd64.zip
+      - name: Install ngrok
+        run: |
+          wget https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-amd64.zip
+          unzip ngrok-stable-linux-amd64.zip
 
-        - name: Start ngrok tunnel
-          run: ./ngrok http 3000 & sleep 5
+      - name: Start ngrok tunnel
+        run: ./ngrok http 3000 > ngrok.log & sleep 10
 
-        - name: Get ngrok public URL
-          id: ngrok
-          run: echo "::set-output name=url::$(./ngrok http -log=stdout 3000 | grep "https://" | awk -F" " '{print $8}')"
+      - name: Display ngrok logs
+        run: cat ngrok.log
 
-        - name: Test ngrok URL
-          run: |
-            NGROK_URL=$(./ngrok http -log=stdout 3000 | grep "https://" | awk -F" " '{print $8}')
-            response=$(curl -sSf -o /dev/null -w "%{http_code}" $NGROK_URL)
-            if [ "$response" -eq 200 ]; then
-              echo "Ngrok URL is reachable and returns 200 OK."
-            else
-              echo "Ngrok URL is not reachable or does not return 200 OK."
+      - name: Get ngrok public URL
+        id: ngrok
+        run: |
+          NGROK_URL=$(grep -Eo "https://[a-zA-Z0-9-]+\.ngrok\.io" ngrok.log | head -n 1)
+          echo "NGROK_URL=$NGROK_URL" >> $GITHUB_ENV
+          echo "ngrok URL is $NGROK_URL"
+          if [ -z "$NGROK_URL" ]; then
+            echo "Failed to get ngrok URL"
             exit 1
-            fi
+          fi
 
-        - name: Install pytest
-          run: python3 -m pip install pytest
+      - name: Test ngrok URL
+        run: |
+          response=$(curl -sSf -o /dev/null -w "%{http_code}" ${{ env.NGROK_URL }})
+          if [ "$response" -eq 200 ]; then
+            echo "Ngrok URL is reachable and returns 200 OK."
+          else
+            echo "Ngrok URL is not reachable or does not return 200 OK."
+            exit 1
+          fi
 
-        #- name: Quality Tests
-          #uses: eosc-synergy/sqaaas-assessment-action@v2
-          #with:
-            #repo: 'https://github.com/HPCI-Lab/yProv.git'
-            #branch: 'main'
+      - name: Install pytest
+        run: python3 -m pip install pytest
 
-        - name: UniTests
-          env:
-            NGROK_URL: ${{ steps.ngrok.outputs.url }}  # Passa l'URL pubblico di ngrok come variabile d'ambiente
-          run: python3 -m pytest -v
+      #- name: Quality Tests
+        #uses: eosc-synergy/sqaaas-assessment-action@v2
+        #with:
+          #repo: 'https://github.com/HPCI-Lab/yProv.git'
+          #branch: 'main'
 
-        - name: Print out payload
-          run: cat workflow_validation_step.json
+      - name: UniTests
+        env:
+          NGROK_URL: ${{ env.NGROK_URL }}  # Pass the ngrok public URL as an environment variable
+        run: python3 -m pytest -v
 
-        - name: Stop Docker container
-          run: docker stop $(docker ps -q)
+      - name: Print out payload
+        run: cat workflow_validation_step.json
 
-        
-               
-        
-
-
-
-
-
-
-
-
-         
-
-     
-        
-        
-  
-  
+      - name: Stop Docker container
+        run: docker stop $(docker ps -q)
