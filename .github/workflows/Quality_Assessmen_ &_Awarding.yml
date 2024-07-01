@@ -42,6 +42,17 @@ jobs:
           id: ngrok
           run: echo "::set-output name=url::$(./ngrok http -log=stdout 3000 | grep "https://" | awk -F" " '{print $8}')"
 
+        - name: Test ngrok URL
+          run: |
+            NGROK_URL=$(./ngrok http -log=stdout 3000 | grep "https://" | awk -F" " '{print $8}')
+            response=$(curl -sSf -o /dev/null -w "%{http_code}" $NGROK_URL)
+            if [ "$response" -eq 200 ]; then
+              echo "Ngrok URL is reachable and returns 200 OK."
+            else
+              echo "Ngrok URL is not reachable or does not return 200 OK."
+            exit 1
+            fi
+
         - name: Install pytest
           run: python3 -m pip install pytest
 
