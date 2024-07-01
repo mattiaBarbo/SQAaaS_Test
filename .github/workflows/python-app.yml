@@ -12,7 +12,7 @@ jobs:
       docker:
         image: docker:stable-dind
         options: --privileged  # Abilita privilegi Docker-in-Docker (DinD)
-        
+    
     name: Quality Assessment & Awarding
     steps:
         - name: Checkout repository
@@ -42,21 +42,43 @@ jobs:
           id: ngrok
           run: echo "::set-output name=url::$(./ngrok http -log=stdout 3000 | grep "https://" | awk -F" " '{print $8}')"
 
+        - name: Test ngrok URL
+          run: |
+            NGROK_URL=$(./ngrok http -log=stdout 3000 | grep "https://" | awk -F" " '{print $8}')
+            response=$(curl -sSf -o /dev/null -w "%{http_code}" $NGROK_URL)
+            if [ "$response" -eq 200 ]; then
+              echo "Ngrok URL is reachable and returns 200 OK."
+            else
+              echo "Ngrok URL is not reachable or does not return 200 OK."
+            exit 1
+            fi
+
         - name: Install pytest
           run: python3 -m pip install pytest
-          
-        - name: Run tests
+
+        #- name: Quality Tests
+          #uses: eosc-synergy/sqaaas-assessment-action@v2
+          #with:
+            #repo: 'https://github.com/HPCI-Lab/yProv.git'
+            #branch: 'main'
+
+        - name: UniTests
           env:
-            API_URL: ${{ steps.ngrok.outputs.url }}  # Passa l'URL pubblico di ngrok come variabile d'ambiente
-          run: |
-            python3 -m pytest -v 
+            NGROK_URL: ${{ steps.ngrok.outputs.url }}  # Passa l'URL pubblico di ngrok come variabile d'ambiente
+          run: python3 -m pytest -v
+
+        - name: Print out payload
+          run: cat workflow_validation_step.json
 
         - name: Stop Docker container
           run: docker stop $(docker ps -q)
 
         
                
-       
+        
+
+
+
 
 
 
