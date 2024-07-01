@@ -13,7 +13,7 @@ jobs:
         image: docker:stable-dind
         options: --privileged  # Abilita privilegi Docker-in-Docker (DinD)
     
-    name: Quality Assessment & Awarding
+    name: python app
     steps:
         - name: Checkout repository
           uses: actions/checkout@v2

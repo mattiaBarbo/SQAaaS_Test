@@ -36,13 +36,18 @@ jobs:
           unzip ngrok-stable-linux-amd64.zip
 
       - name: Start ngrok tunnel
-        run: ./ngrok http 3000 & sleep 5
+        run: ./ngrok http 3000 > ngrok.log & sleep 10
 
       - name: Get ngrok public URL
         id: ngrok
         run: |
-          NGROK_URL=$(./ngrok http -log=stdout 3000 | grep -Eo "https://[a-zA-Z0-9-]+\.ngrok\.io")
+          NGROK_URL=$(grep -Eo "https://[a-zA-Z0-9-]+\.ngrok\.io" ngrok.log)
           echo "NGROK_URL=$NGROK_URL" >> $GITHUB_ENV
+          echo "ngrok URL is $NGROK_URL"
+          if [ -z "$NGROK_URL" ]; then
+            echo "Failed to get ngrok URL"
+            exit 1
+          fi
 
       - name: Test ngrok URL
         run: |
