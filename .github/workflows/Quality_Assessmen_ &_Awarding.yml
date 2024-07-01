@@ -1,0 +1,82 @@
+name: Software Quality Assurance as a Service
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build: 
+    runs-on: ubuntu-latest
+
+    services:
+      docker:
+        image: docker:stable-dind
+        options: --privileged  # Abilita privilegi Docker-in-Docker (DinD)
+    
+    name: Quality Assessment & Awarding
+    steps:
+        - name: Checkout repository
+          uses: actions/checkout@v2
+          with:
+            submodules: true          
+            fetch-depth: 0    
+
+        - name: Start Docker container web
+          run: docker run -d -p 3000:3000 hpci/yprov:latest
+
+        - name: Start Docker container db
+          run: docker run -d -p 7474:7474 neo4j:enterprise
+
+        - name: Wait for API to start
+          run: sleep 10s  # Attendi che il container si avvii completamente
+
+        - name: Install ngrok
+          run: |
+            wget https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-amd64.zip
+            unzip ngrok-stable-linux-amd64.zip
+
+        - name: Start ngrok tunnel
+          run: ./ngrok http 3000 & sleep 5
+
+        - name: Get ngrok public URL
+          id: ngrok
+          run: echo "::set-output name=url::$(./ngrok http -log=stdout 3000 | grep "https://" | awk -F" " '{print $8}')"
+
+        - name: Install pytest
+          run: python3 -m pip install pytest
+
+        #- name: Quality Tests
+          #uses: eosc-synergy/sqaaas-assessment-action@v2
+          #with:
+            #repo: 'https://github.com/HPCI-Lab/yProv.git'
+            #branch: 'main'
+
+        - name: UniTests
+          env:
+            NGROK_URL: ${{ steps.ngrok.outputs.url }}  # Passa l'URL pubblico di ngrok come variabile d'ambiente
+          run: python3 -m pytest -v
+
+        - name: Print out payload
+          run: cat workflow_validation_step.json
+
+        - name: Stop Docker container
+          run: docker stop $(docker ps -q)
+
+        
+               
+        
+
+
+
+
+
+
+
+
+         
+
+     
+        
+        
+  
+  
