@@ -1,0 +1,54 @@
+name: Test API
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      api:
+        image: hpci/yprov:latest
+        ports:
+          - 3000:3000
+        options: >-
+          --health-cmd "curl --fail http://localhost:3000/ || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      neo4j:
+        image: neo4j:enterprise
+        ports:
+          - 7474:7474
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+      with:
+        submodules: true  # Inizializza e aggiorna i submodule
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.10.12
+
+    - name: Install dependencies for tests
+      run: pip install pytest requests
+
+    - name: Install dependencies for app
+      run: |
+        cd yProv
+        pip install -r requirements.txt
+
+    - name: Wait for services to be ready
+      run: sleep 30
+
+    - name: Run tests
+      run: python3 -m pytest -v 
