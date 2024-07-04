@@ -29,4 +29,4 @@ jobs:
         with:
           repo: 'https://github.com/HPCI-Lab/yProv.git'
           branch: 'main'
-          qc_uni_steps: 'Validation_of_QC.Uni'
+          qc_uni_steps: uniTest_with_pytest
