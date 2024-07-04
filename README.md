@@ -1,3 +1,3 @@
 # SQAaaS_Test #
 
-python3 -m pytest -v ciao
+python3 -m pytest -v 
