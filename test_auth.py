@@ -4,7 +4,7 @@ import test_documents
 
 PATH = "http://localhost:3000/api/v0/auth"
 
-
+"""
 def test_auth_login():
     # Obtain the ngrok URL dynamically from GitHub Actions environment
     ngrok_url = os.getenv('NGROK_URL')  
@@ -45,6 +45,7 @@ def test_auth_login():
     assert response.status_code == 401
 
 """
+
 def test_auth_login():
     # correct login
     payload = {
@@ -79,14 +80,14 @@ def test_auth_login():
     }
     response = requests.post(PATH + '/login', json=payload)
     assert response.status_code == 401
-"""
+
     
 
 
 
-"""
+
 def test_auth_register():
-    
+    """
     # correct new username and password 
     payload = {
         "user": "myUsername",
