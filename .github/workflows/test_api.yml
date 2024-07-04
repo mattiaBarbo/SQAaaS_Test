@@ -12,48 +12,65 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
-    services:
-      api:
-        image: hpci/yprov:latest
-        ports:
-          - 3000:3000
-        options: >-
-          --restart on-failure
-          --network=yprov_net
-          --env USER=neo4j
-          --env PASSWORD=password
-          -v yprov_data:/app/conf
-          --health-cmd "curl --fail http://localhost:3000/ || exit 1"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-      neo4j:
-        image: neo4j:enterprise
-        ports:
-          - 7474:7474
-
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
-      with:
-        submodules: true  # Inizializza e aggiorna i submodule
+      - name: Check out repository
+        uses: actions/checkout@v2
 
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.10.12
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
 
-    - name: Install dependencies for tests
-      run: pip install pytest requests
+      - name: Create Docker volumes
+        run: |
+          docker volume create neo4j_data
+          docker volume create neo4j_logs
+          docker volume create yprov_data
 
-    - name: Install dependencies for app
-      run: |
-        cd yProv
-        pip install -r requirements.txt
+      - name: Create Docker network
+        run: docker network create yprov_net
 
-    - name: Wait for services to be ready
-      run: sleep 30
+      - name: Start Neo4j service
+        run: |
+          docker run \
+            --name db \
+            --network=yprov_net \
+            -p 7474:7474 -p 7687:7687 \
+            -d \
+            -v neo4j_data:/data \
+            -v neo4j_logs:/logs \
+            -v $HOME/neo4j/import:/var/lib/neo4j/import \
+            -v $HOME/neo4j/plugins:/plugins \
+            --env NEO4J_AUTH=neo4j/password \
+            --env NEO4J_ACCEPT_LICENSE_AGREEMENT=eval \
+            -e NEO4J_apoc_export_file_enabled=true \
+            -e NEO4J_apoc_import_file_enabled=true \
+            -e NEO4J_apoc_import_file_use__neo4j__config=true \
+            -e NEO4J_PLUGINS='["apoc"]' \
+            neo4j:enterprise
 
-    - name: Run tests
-      run: python3 -m pytest -v 
+      - name: Start API service
+        run: |
+          docker run \
+            --restart on-failure \
+            --name web \
+            --network=yprov_net \
+            -p 3000:3000 \
+            -d \
+            -v yprov_data:/app/conf \
+            --env USER=neo4j \
+            --env PASSWORD=password \
+            hpci/yprov:latest
+
+      - name: Run tests
+        run: |
+          python3 -m pytest -v
+
+      - name: Clean up
+        run: |
+          docker stop web
+          docker rm web
+          docker stop db
+          docker rm db
+          docker network rm yprov_net
+          docker volume rm neo4j_data
+          docker volume rm neo4j_logs
+          docker volume rm yprov_data
