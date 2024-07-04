@@ -60,6 +60,13 @@ jobs:
             --env PASSWORD=password \
             hpci/yprov:latest
 
+      - name: Wait for API to be ready
+        run: |
+          echo "Waiting for API to be ready..."
+          until curl -s http://localhost:3000/api/v0/auth | grep "expected_response"; do
+            sleep 5
+          done
+
       - name: Set up Python environment
         run: |
           python3 -m pip install --upgrade pip
