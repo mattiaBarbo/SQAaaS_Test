@@ -18,6 +18,11 @@ jobs:
         ports:
           - 3000:3000
         options: >-
+          --restart on-failure
+          --network=yprov_net
+          --env USER=neo4j
+          --env PASSWORD=password
+          -v yprov_data:/app/conf
           --health-cmd "curl --fail http://localhost:3000/ || exit 1"
           --health-interval 10s
           --health-timeout 5s
