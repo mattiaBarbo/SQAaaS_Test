@@ -54,7 +54,7 @@ def test_auth_register():
         "password": "myPassword"
     }
     response = requests.post(PATH + '/register', json=payload)
-    assert response.status_code == 200
+    assert response.status_code == 201
     
 
     # username and password already exist
