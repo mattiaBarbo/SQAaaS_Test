@@ -60,6 +60,11 @@ jobs:
             --env PASSWORD=password \
             hpci/yprov:latest
 
+      - name: Set up Python environment
+        run: |
+          python3 -m pip install --upgrade pip
+          pip install pytest
+
       - name: Run tests
         run: |
           python3 -m pytest -v
