@@ -1,80 +1,36 @@
-name: Software Quality Assurance as a Service
+name: Quality_Assessment_ &_Awarding_v2
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
-  build: 
+  test:
     runs-on: ubuntu-latest
 
-    services:
-      docker:
-        image: docker:stable-dind
-        options: --privileged  # Enable Docker-in-Docker (DinD) privileges
-    
-    name: Quality Assessment & Awarding
     steps:
-      - name: Checkout repository
+      - name: Check out repository
         uses: actions/checkout@v2
+
+      - name: Quality Tests
+        uses: eosc-synergy/sqaaas-assessment-action@v2
         with:
-          submodules: true          
-          fetch-depth: 0    
+          repo: 'https://github.com/HPCI-Lab/yProv.git'
+          branch: 'main'   
 
-      - name: Start Docker container web
-        run: docker run -d -p 3000:3000 hpci/yprov:latest
+      - name: Validation of QC.Uni
+        uses: eosc-synergy/sqaaas-step-action@v1
+        with:
+          name: uniTest_with_pytest
+          tool: commands
+          commands: docker run --privileged -v /var/run/docker.sock:/var/run/docker.sock --rm unittests:v1.0
+          container: unittests:v1.0   
 
-      - name: Start Docker container db
-        run: docker run -d -p 7474:7474 neo4j:enterprise
-
-      - name: Wait for API to start
-        run: sleep 10s  # Wait for the container to fully start
-
-      - name: Install ngrok
-        run: |
-          wget https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-amd64.zip
-          unzip ngrok-stable-linux-amd64.zip
-
-      - name: Start ngrok tunnel
-        run: ./ngrok http 3000 > ngrok.log & sleep 10
-
-      - name: Get ngrok public URL
-        id: ngrok
-        run: |
-          NGROK_URL=$(grep -Eo "https://[a-zA-Z0-9-]+\.ngrok\.io" ngrok.log)
-          echo "NGROK_URL=$NGROK_URL" >> $GITHUB_ENV
-          echo "ngrok URL is $NGROK_URL"
-          if [ -z "$NGROK_URL" ]; then
-            echo "Failed to get ngrok URL"
-            exit 1
-          fi
-
-      - name: Test ngrok URL
-        run: |
-          response=$(curl -sSf -o /dev/null -w "%{http_code}" ${{ env.NGROK_URL }})
-          if [ "$response" -eq 200 ]; then
-            echo "Ngrok URL is reachable and returns 200 OK."
-          else
-            echo "Ngrok URL is not reachable or does not return 200 OK."
-            exit 1
-          fi
-
-      - name: Install pytest
-        run: python3 -m pip install pytest
-
-      #- name: Quality Tests
-        #uses: eosc-synergy/sqaaas-assessment-action@v2
-        #with:
-          #repo: 'https://github.com/HPCI-Lab/yProv.git'
-          #branch: 'main'
-
-      - name: UniTests
-        env:
-          NGROK_URL: ${{ env.NGROK_URL }}  # Pass the ngrok public URL as an environment variable
-        run: python3 -m pytest -v
-
-      - name: Print out payload
-        run: cat workflow_validation_step.json
-
-      - name: Stop Docker container
-        run: docker stop $(docker ps -q)
+      - name: QC.Uni execution
+        uses: eosc-synergy/sqaaas-assessment-action@v2
+        with:
+          qc_uni_steps: uniTest_with_pytest 
