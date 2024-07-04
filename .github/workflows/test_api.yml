@@ -63,8 +63,17 @@ jobs:
       - name: Wait for API to be ready
         run: |
           echo "Waiting for API to be ready..."
-          until curl -s http://localhost:3000/api/v0/auth | grep "expected_response"; do
-            sleep 5
+          max_attempts=30
+          attempt=0
+          until [ $attempt -ge $max_attempts ]
+          do
+            if curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/api/v0/documents | grep -q "200"; then
+              echo "API is ready!"
+              break
+            fi
+            attempt=$((attempt+1))
+            echo "Attempt $attempt/$max_attempts: API is not ready yet. Waiting..."
+            sleep 10
           done
 
       - name: Set up Python environment
