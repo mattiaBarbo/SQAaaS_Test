@@ -11,6 +11,10 @@ RUN apt-get update && apt-get install -y \
 # Crea una directory di lavoro nell'immagine
 WORKDIR /app
 
+# Clona il repository GitHub
+RUN rm -rf /app/*  # Rimuove tutto il contenuto attuale della directory /app
+RUN git clone https://github.com/mattiaBarbo/SQAaaS_Test.git .
+
 # Copia il file requirements.txt dalla cartella clonata
 COPY requirements.txt /app/requirements.txt
 

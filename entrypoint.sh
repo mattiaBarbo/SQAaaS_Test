@@ -74,6 +74,7 @@ for i in {1..15}; do
 done
 
 # Run tests
+cd /app
 python3 -m pytest -v
 
 # Quality Tests (dummy step as the actual action cannot be executed directly)
