@@ -73,9 +73,6 @@ for i in {1..15}; do
     sleep 10
 done
 
-# Change directory to your cloned repository
-cd /app/SQAaaS_Test  # Adjust this path according to your project structure
-
 # Run tests
 python3 -m pytest -v
 
