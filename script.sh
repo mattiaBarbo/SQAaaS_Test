@@ -83,11 +83,12 @@ python3 -m pytest -v
 echo "Clean up container, volumes and network"
 docker stop web
 docker stop db
-docker stop unittests
 docker rm web
 docker rm db
-docker rm unittests
 docker volume rm neo4j_data
 docker volume rm neo4j_logs
 docker volume rm yprov_data
+docker network disconnect yprov_net unittests
 docker network rm yprov_net
+docker stop unittests
+docker rm unittests
