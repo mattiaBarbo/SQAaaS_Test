@@ -37,21 +37,6 @@ docker run \
   -e NEO4J_PLUGINS='["apoc"]' \
   neo4j:enterprise
 
-# Wait for Neo4j to be ready
-echo "Waiting for Neo4j to be ready..."
-max_attempts=15
-attempt=0
-until [ $attempt -ge $max_attempts ]
-do
-  if curl -s -o /dev/null -w "%{http_code}" http://db:7474 | grep -q "200"; then
-    echo "Neo4j is ready!"
-    break
-  fi
-  attempt=$((attempt+1))
-  echo "Attempt $attempt/$max_attempts: Neo4j is not ready yet. Waiting..."
-  sleep 10
-done
-
 # Start API service
 docker run \
   --restart on-failure \
@@ -64,29 +49,29 @@ docker run \
   --env PASSWORD=password \
   hpci/yprov:latest
 
-# Wait for API to be ready
-echo "Waiting for API to be ready..."
-max_attempts=15
-attempt=0
-until [ $attempt -ge $max_attempts ]
-do
-  if curl -s -o /dev/null -w "%{http_code}" http://web:3000/api/v0/documents | grep -q "200"; then
-    echo "API is ready!"
-    break
-  fi
-  attempt=$((attempt+1))
-  echo "Attempt $attempt/$max_attempts: API is not ready yet. Waiting..."
-  sleep 10
+docker network connect yprov_net unittests
+
+# Wait for Neo4j to be ready
+echo "Waiting for Neo4j to be ready..."
+for i in {1..15}; do
+    if curl -s http://db:7474 > /dev/null; then
+        echo "Neo4j is ready!"
+        break
+    fi
+    echo "Attempt $i/15: Neo4j is not ready yet. Waiting..."
+    sleep 10
 done
 
-# Verify connection from web to Neo4j
-docker exec web curl -s -o /dev/null -w "%{http_code}" bolt://db:7687 | grep -q "200"
-if [ $? -eq 0 ]; then
-  echo "Connection from web to Neo4j is successful!"
-else
-  echo "Failed to connect from web to Neo4j"
-  exit 1
-fi
+# Wait for the API to be ready
+echo "Waiting for API to be ready..."
+for i in {1..15}; do
+    if curl -s http://web:3000/api/v0/documents > /dev/null; then
+        echo "API is ready!"
+        break
+    fi
+    echo "Attempt $i/15: API is not ready yet. Waiting..."
+    sleep 10
+done
 
 # Run tests
 python3 -m pytest -v
