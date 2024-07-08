@@ -19,7 +19,7 @@ if [ "$(docker network ls -q -f name=yprov_net)" == "" ]; then
   docker network create yprov_net
 fi
 
-# Start Neo4j service
+# Run Neo4j (db) container
 docker run \
   --name db \
   --network=yprov_net \
@@ -37,7 +37,7 @@ docker run \
   -e NEO4J_PLUGINS='["apoc"]' \
   neo4j:enterprise
 
-# Start API service
+# Run yProv (web) container
 docker run \
   --restart on-failure \
   --name web \
@@ -51,42 +51,43 @@ docker run \
 
 docker network connect yprov_net unittests
 
-# Wait for Neo4j to be ready
-echo "Waiting for Neo4j to be ready..."
+# Try to connect to Neo4j
+echo "Connection to Neo4j"
 for i in {1..15}; do
     if curl -s http://db:7474 > /dev/null; then
         echo "Neo4j is ready!"
         break
     fi
-    echo "Attempt $i/15: Neo4j is not ready yet. Waiting..."
+    echo "Attempt $i/15: Neo4j is not ready"
     sleep 10
 done
 
-# Wait for the API to be ready
-echo "Waiting for API to be ready..."
+# Try to connect to yProv API
+echo "Connection to yProv API"
 for i in {1..15}; do
     if curl -s http://web:3000/api/v0/documents > /dev/null; then
         echo "API is ready!"
         break
     fi
-    echo "Attempt $i/15: API is not ready yet. Waiting..."
+    echo "Attempt $i/15: API is not ready"
     sleep 10
 done
 
 # Run tests
+echo "Running Quality Tests"
 cd /app
 python3 -m pytest -v
 
-# Quality Tests (dummy step as the actual action cannot be executed directly)
-echo "Running Quality Tests..."
-# Placeholder for quality test script
+# Clean up container, volumes and network
 
-# Clean up
+echo "Clean up container, volumes and network"
 docker stop web
-docker rm web
 docker stop db
+docker stop unittests
+docker rm web
 docker rm db
-docker network rm yprov_net
+docker rm unittests
 docker volume rm neo4j_data
 docker volume rm neo4j_logs
 docker volume rm yprov_data
+docker network rm yprov_net

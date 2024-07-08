@@ -1,31 +1,24 @@
-# Usa un'immagine di base preesistente
 FROM python:3.9-slim
 
-# Installa le dipendenze del sistema
+# Install dependencies
 RUN apt-get update && apt-get install -y \
     curl \
     git \
     docker.io \
     docker-compose
 
-# Crea una directory di lavoro nell'immagine
+# Work Directory
 WORKDIR /app
 
-# Clona il repository GitHub
-RUN rm -rf /app/*  # Rimuove tutto il contenuto attuale della directory /app
+# Cleaning Work Directory, clone updated Github repo
+RUN rm -rf /app/*  
 RUN git clone https://github.com/mattiaBarbo/SQAaaS_Test.git .
 
-# Copia il file requirements.txt dalla cartella clonata
+# Install requirements
 COPY requirements.txt /app/requirements.txt
-
-# Installa le dipendenze Python specificate in requirements.txt
 RUN pip install -r requirements.txt
 
-# Copia lo script entrypoint.sh dalla cartella clonata
-COPY entrypoint.sh /app/entrypoint.sh
-
-# Rendi eseguibile lo script entrypoint.sh
-RUN chmod +x /app/entrypoint.sh
-
-# Esegui lo script entrypoint.sh come entrypoint del container
-ENTRYPOINT ["/app/entrypoint.sh"]
+# Make the script.sh script executable and run it
+COPY script.sh /app/script.sh
+RUN chmod +x /app/script.sh
+ENTRYPOINT ["/app/script.sh"]
