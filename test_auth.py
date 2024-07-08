@@ -1,7 +1,7 @@
 import requests
 import test_documents
 
-PATH = "http://localhost:3000/api/v0/auth"
+PATH = "http://web:3000/api/v0/auth"
 
 """
 def test_auth_login():
