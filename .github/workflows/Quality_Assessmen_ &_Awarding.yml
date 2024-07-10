@@ -1,4 +1,4 @@
-name: Quality_Assessment_ &_Awarding_v2
+name: Quality_Assessment_&_Awarding_v2
 
 on:
   push:
@@ -9,26 +9,24 @@ on:
       - main
 
 jobs:
-  test:
+  tests:
     runs-on: ubuntu-latest
-
+    
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v2
-
-      - name: Validation of QC.Uni
+      - name: Step definition for validating the workflow
         uses: eosc-synergy/sqaaas-step-action@v1
         with:
-          name: uniTest_with_pytest
+          name: unittests_pytest
           tool: commands
-          commands: docker run --privileged -v /var/run/docker.sock:/var/run/docker.sock --rm unittests:v1.0
-          container: unittests:v1.0
-
-      - name: Quality Tests
+          commands: |
+            make torch-env-cpu
+            make tensorflow-env-cpu
+            .venv-pytorch/bin/pytest -v ./tests/ -m "not slurm and not memory_heavy"
+          container: sqaaas_yprov:v1.0
+      - name: SQAaaS assessment with unit testing (QC.Uni) step
         uses: eosc-synergy/sqaaas-assessment-action@v2
         with:
+          qc_uni_steps: unittests_pytest
           repo: 'https://github.com/HPCI-Lab/yProv.git'
-          branch: 'main'
-          qc_uni_steps: uniTest_with_pytest
-
-          
+          branch: 'main'    
+    

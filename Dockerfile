@@ -12,7 +12,7 @@ WORKDIR /app
 
 # Clean and clone updated GitHub repo
 RUN rm -rf /app/* && \
-    git clone https://github.com/HPCI-Lab/sqaaas.git .
+    git clone https://github.com/mattiaBarbo/SQAaaS_Test.git .
     
 # Install requirements
 COPY requirements.txt /app/requirements.txt
