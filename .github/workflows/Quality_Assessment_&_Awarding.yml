@@ -18,12 +18,12 @@ jobs:
         with:
           name: unittests_pytest
           tool: commands
-          commands: python3 -m pytest -v
+          commands: docker exec prova pytest
           container: mattiabarbo/prova:1.1
       - name: SQAaaS assessment with unit testing (QC.Uni) step
         uses: eosc-synergy/sqaaas-assessment-action@v2
         with:
           qc_uni_steps: unittests_pytest
-          repo: 'https://github.com/HPCI-Lab/yProv.git'
+          repo: https://github.com/mattiaBarbo/SQAaaS_Test.git
           branch: 'main'    
     
