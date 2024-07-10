@@ -73,4 +73,7 @@ for i in {1..15}; do
     sleep 10
 done
 
+echo "pronto per i test"
 
+# Keep the container running
+tail -f /dev/null
